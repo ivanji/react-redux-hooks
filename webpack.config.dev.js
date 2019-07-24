@@ -37,7 +37,7 @@ module.exports = {
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ["babel-loader"] // babel loader is use to transpile modern JS down to version older browsers will understand
+        use: ["babel-loader", "eslint-loader"] // babel loader is use to transpile modern JS down to version older browsers will understand
       },
       {
         test: /(\.css)$/,

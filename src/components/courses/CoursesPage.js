@@ -3,11 +3,15 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import * as courseActions from "../../redux/actions/courseActions";
 import * as authorActions from "../../redux/actions/authorActions";
+import { Redirect } from "react-router-dom";
 
 import { bindActionCreators } from "redux";
 import CourseList from "./CourseList";
 
 class CoursesPage extends React.Component {
+  state = {
+    redirectToAddCoursePage: false
+  };
   componentDidMount() {
     const { courses, authors, actions } = this.props;
 
@@ -27,7 +31,17 @@ class CoursesPage extends React.Component {
   render() {
     return (
       <>
+        {this.state.redirectToAddCoursePage && <Redirect to="/course" />}
         <h2>Courses</h2>
+
+        <button
+          style={{ marginBottom: 20 }}
+          className="btn btn-primary add-course"
+          onClick={() => this.setState({ redirectToAddCoursePage: true })}
+        >
+          Add Course
+        </button>
+
         <CourseList courses={this.props.courses} />
       </>
     );
@@ -48,7 +62,9 @@ function mapStateToProps(state) {
         : state.courses.map(course => {
             return {
               ...course,
-              authorName: state.authors.find(a => a.id === course.authorId).name
+              authorName: state.authors.find(
+                a => a.id === parseInt(course.authorId) // had to force coercion here, as id is saved in API as string
+              ).name
             };
           }),
     authors: state.authors

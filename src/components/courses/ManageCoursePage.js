@@ -5,8 +5,10 @@ import { loadCourses, saveCourse } from "../../redux/actions/courseActions";
 import { loadAuthors } from "../../redux/actions/authorActions";
 import CourseForm from "./CourseForm";
 import { newCourse } from "../../../tools/mockData";
+import Spinner from "../common/Spinner";
+import { toast } from "react-toastify";
 
-function ManageCoursePage({
+export function ManageCoursePage({
   courses,
   authors,
   loadAuthors,
@@ -16,7 +18,8 @@ function ManageCoursePage({
   ...props //rest operator.
 }) {
   const [course, setCourse] = useState({ ...props.course });
-  const [errors, setErros] = useState({});
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (courses.length === 0) {
@@ -44,18 +47,43 @@ function ManageCoursePage({
 
   function handleSave(event) {
     event.preventDefault();
-    saveCourse(course).then(() => {
-      history.push("/courses");
-    });
+
+    if (!formIsValid()) return;
+    setSaving(true);
+    saveCourse(course)
+      .then(() => {
+        toast.success("Course Saved");
+        history.push("/courses");
+      })
+      .catch(error => {
+        setSaving(false);
+        setErrors({ onSave: error.message });
+      });
   }
 
-  return (
+  function formIsValid() {
+    const { title, authorId, category } = course;
+    const errors = {};
+
+    if (!title) errors.title = "Title is required!.";
+    if (!authorId) errors.author = "Author is required";
+    if (!category) errors.category = "Category is required";
+
+    setErrors(errors);
+    // form is valid if the errors object still has no properties
+    return Object.keys(errors).length === 0;
+  }
+
+  return courses.length === 0 || authors.length === 0 ? (
+    <Spinner />
+  ) : (
     <CourseForm
       course={course}
       errors={errors}
       authors={authors}
       onChange={handleChange}
       onSave={handleSave}
+      saving={saving}
     />
   );
 }
@@ -70,13 +98,15 @@ ManageCoursePage.propTypes = {
   history: PropTypes.object.isRequired
 };
 
-// Selector - as it selects data from the redux ste.
-// It can also be used within the reducer to be re-used by other components
+// Selector - as it selects data from the redux store.
+// It can also be used within a reducer to be re-used by other components
 // or use Reselect library to memoize
 function getCourseBySlug(courses, slug) {
   return courses.find(course => course.slug === slug) || null;
 }
 
+// MapStateToProps runs every time the redux store changes.
+// In this case, it'll run again when the API getCourses call completes
 function mapStateToProps(state, ownProps) {
   const slug = ownProps.match.params.slug;
   const course =
@@ -89,7 +119,7 @@ function mapStateToProps(state, ownProps) {
     authors: state.authors
   };
 }
-console.log(mapStateToProps);
+
 const mapDispatchToProps = {
   loadAuthors,
   loadCourses,
